@@ -1,9 +1,62 @@
-const source='https://cy23ivqg59.feishu.cn/wiki/XXj6wjCvliXPeOkxqFncqJqLncb';
-document.querySelector('#archive-list').innerHTML=[['4.0','历史版本'],['3.5','历史版本'],['3.4','含 AX'],['3.3','历史版本']].map(([v,label])=>`<a href="${source}#AGpodSE8DoetpextfF5cZt3Inrg" target="_blank" rel="noopener" aria-label="前往飞书查找 ${v} 版本"><strong>${v}</strong><span>${label}</span><i>↗</i></a>`).join('');
-let toastTimer;function toast(msg){let el=document.querySelector('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600)}
-document.querySelectorAll('[data-copy]').forEach(button=>button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(button.dataset.copy);toast('服务器地址已复制，游戏里见！')}catch{toast('服务器地址：'+button.dataset.copy)}}));
+const releases = window.CHARLY_RELEASES;
+const latest = releases[0];
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function channels(release) {
+  const links = [];
+  if (release.downloadUrl) links.push(`<a class="button primary" href="${escapeHtml(release.downloadUrl)}">下载 v${escapeHtml(release.version)} <span>↓</span></a>`);
+  else if (release.githubUrl) links.push(`<a class="button primary" href="${escapeHtml(release.githubUrl)}" target="_blank" rel="noopener">GitHub 发布页 ↗</a>`);
+  if (release.nasUrl) links.push(`<a class="text-link" href="${escapeHtml(release.nasUrl)}">NAS 备用下载 ↗</a>`);
+  return links.length ? `<div class="download-channels">${links.join('')}</div>` : '<p class="pending-note">下载文件待补充</p>';
+}
+function changeRows(release) {
+  if (!release.changes.length) return '<p class="pending-note">此版本的更新日志待整理。</p>';
+  return `<div class="update-list">${release.changes.map((change,index) => `<article><span class="change-tag ${change.type==='新增'?'add':change.type==='调整'?'opt':''}">${escapeHtml(change.type)}</span><div><h3>${escapeHtml(change.title)}</h3><p>${escapeHtml(change.text)}</p></div><span class="row-num">${String(index+1).padStart(2,'0')}</span></article>`).join('')}</div>`;
+}
+document.querySelectorAll('[data-latest-version]').forEach(el => el.textContent=latest.version);
+document.querySelector('#latest-download').innerHTML = `<div class="download-panel"><div class="version-art"><span>CHARLYMC</span><strong>${escapeHtml(latest.version)}</strong><div class="block-logo" aria-hidden="true"><i></i><i></i><i></i></div><small>THE NEXT CHAPTER</small></div><div class="download-info"><div class="release-label">最新发布 <span>VERSION ${escapeHtml(latest.version)}</span></div><h3>${escapeHtml(latest.title)}</h3><p>${escapeHtml(latest.summary)}<br>下载整合包，跟着指南导入 PCL，就能和大家汇合。</p><div class="file-meta"><span>ZIP 整合包</span><span>${escapeHtml(latest.size)}</span><span>通过 PCL 导入</span></div>${channels(latest)}<small class="download-hint">GitHub 直接下载 · 下载后无需解压</small></div></div>`;
+document.querySelector('#latest-changelog').innerHTML=`<div class="update-layout"><div class="update-version"><strong>${escapeHtml(latest.version)}</strong><span>本次更新</span><p>给日常冒险，<br>添一点新鲜感。</p></div>${changeRows(latest)}</div>`;
+document.querySelector('#version-list').innerHTML=releases.map((release,index)=>`<article class="release-card"><header class="release-header"><div><span class="release-number">${escapeHtml(release.version)}</span>${index===0?'<span class="latest-badge">最新版本</span>':''}${release.note?`<span class="release-note">${escapeHtml(release.note)}</span>`:''}</div><span class="release-file">${release.size?escapeHtml(release.size)+' · ZIP 整合包':'历史版本'}</span></header><div class="release-body"><div class="release-log"><h2>更新日志</h2>${changeRows(release)}</div><div class="release-download"><h2>下载整合包</h2>${channels(release)}${release.downloadUrl?'<p class="pending-note">通过 PCL 导入，无需解压。</p>':''}</div></div></article>`).join('');
+
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+const tabIds = tabs.map(tab=>tab.dataset.tab);
+function activateTab(id, {focus=false, scroll=false}={}) {
+  if (!tabIds.includes(id)) id='home';
+  tabs.forEach(tab=>{
+    const selected=tab.dataset.tab===id;
+    tab.setAttribute('aria-selected',String(selected));
+    tab.tabIndex=selected?0:-1;
+    document.querySelector('#'+tab.getAttribute('aria-controls')).hidden=!selected;
+    if(selected&&focus)tab.focus();
+  });
+  document.title=id==='home'?'CharlyMC · 一起，方块之间':`${tabs.find(tab=>tab.dataset.tab===id).textContent} · CharlyMC`;
+  if(scroll)window.scrollTo({top:0,behavior:'instant'});
+}
+function navigate(id, jump) {
+  if(location.hash !== '#'+id)history.pushState(null,'','#'+id);
+  activateTab(id,{scroll:!jump});
+  if(jump)requestAnimationFrame(()=>document.getElementById(jump)?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}));
+}
+tabs.forEach((tab,index)=>{
+  tab.addEventListener('click',()=>navigate(tab.dataset.tab));
+  tab.addEventListener('keydown',event=>{
+    let next;
+    if(event.key==='ArrowRight')next=(index+1)%tabs.length;
+    if(event.key==='ArrowLeft')next=(index-1+tabs.length)%tabs.length;
+    if(event.key==='Home')next=0;
+    if(event.key==='End')next=tabs.length-1;
+    if(next!==undefined){event.preventDefault();navigate(tabs[next].dataset.tab);tabs[next].focus();}
+  });
+});
+document.querySelectorAll('[data-panel-link], [data-jump]').forEach(link=>link.addEventListener('click',event=>{event.preventDefault();navigate(link.dataset.panelLink||'home',link.dataset.jump);}));
+function restoreTab(){activateTab(location.hash.slice(1)||'home',{scroll:true});}
+window.addEventListener('popstate',restoreTab);
+window.addEventListener('hashchange',restoreTab);
+activateTab(location.hash.slice(1)||'home');
+let toastTimer;
+function toast(message){const el=document.querySelector('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}
+document.querySelectorAll('[data-copy]').forEach(button=>button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(button.dataset.copy);toast('服务器地址已复制，游戏里见！');}catch{toast('服务器地址：'+button.dataset.copy);}}));
 const canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
-function draw(){const box=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=box.width*dpr;canvas.height=box.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);let w=box.width,h=box.height;ctx.fillStyle='#e6eddf';ctx.fillRect(0,0,w,h);const scale=Math.min(w/550,h/470);ctx.save();ctx.translate(w/2,h*.48);ctx.scale(scale,scale);
+function draw(){const box=canvas.getBoundingClientRect();if(!box.width||!box.height)return;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=box.width*dpr;canvas.height=box.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);let w=box.width,h=box.height;ctx.fillStyle='#e6eddf';ctx.fillRect(0,0,w,h);const scale=Math.min(w/550,h/470);ctx.save();ctx.translate(w/2,h*.48);ctx.scale(scale,scale);
 // An isometric block world, drawn locally without remote image dependencies.
 const unit=15,N=21;function point(x,y,z){return[(x-y)*unit,(x+y)*unit*.49-z*unit*.9]}
 function poly(points,color){ctx.fillStyle=color;ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill()}
