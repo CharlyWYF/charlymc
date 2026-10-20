@@ -108,6 +108,7 @@ reducedMotion.addEventListener('change',()=>{if(finishTransition)finishTransitio
 window.addEventListener('popstate',restoreTab);
 window.addEventListener('hashchange',restoreTab);
 activateTab(location.hash.slice(1)||'home',{animate:false});
+installTabGestures({root:document,tabIds,getActiveTabId:()=>activeTabId,navigate,isTransitioning:()=>!!finishTransition});
 let toastTimer;
 function toast(message){const el=document.querySelector('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}
 document.querySelectorAll('[data-copy]').forEach(button=>button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(button.dataset.copy);toast('服务器地址已复制，游戏里见！');}catch{toast('服务器地址：'+button.dataset.copy);}}));
