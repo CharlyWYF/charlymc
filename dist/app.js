@@ -19,22 +19,76 @@ document.querySelector('#version-list').innerHTML=releases.map((release,index)=>
 
 const tabs = [...document.querySelectorAll('[role="tab"]')];
 const tabIds = tabs.map(tab=>tab.dataset.tab);
-function activateTab(id, {focus=false, scroll=false}={}) {
+const main = document.querySelector('main');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const tabIndicator = document.createElement('span');
+tabIndicator.className = 'tab-indicator';
+tabIndicator.setAttribute('aria-hidden','true');
+document.querySelector('.tabs').append(tabIndicator);
+let activeTabId = null;
+let finishTransition = null;
+function moveIndicator() {
+  const selected=tabs.find(tab=>tab.dataset.tab===activeTabId);
+  if(!selected)return;
+  tabIndicator.style.width=selected.offsetWidth+'px';
+  tabIndicator.style.transform=`translateX(${selected.offsetLeft}px)`;
+}
+new ResizeObserver(moveIndicator).observe(document.querySelector('.tabs'));
+function activateTab(id, {focus=false, scroll=false, animate=true}={}) {
   if (!tabIds.includes(id)) id='home';
+  if(finishTransition)finishTransition();
+  const previousId=activeTabId;
+  const previous=previousId?document.querySelector('#panel-'+previousId):null;
+  const next=document.querySelector('#panel-'+id);
+  const previousHeight=previous?.getBoundingClientRect().height || 0;
+  const canAnimate=animate&&previous&&previousId!==id&&!reducedMotion.matches;
+  activeTabId=id;
   tabs.forEach(tab=>{
     const selected=tab.dataset.tab===id;
+    const panel=document.querySelector('#'+tab.getAttribute('aria-controls'));
     tab.setAttribute('aria-selected',String(selected));
     tab.tabIndex=selected?0:-1;
-    document.querySelector('#'+tab.getAttribute('aria-controls')).hidden=!selected;
-    if(selected&&focus)tab.focus();
+    panel.hidden=!selected;
+    panel.inert=!selected;
+    panel.setAttribute('aria-hidden',String(!selected));
+    if(selected&&(focus||previous?.contains(document.activeElement)))tab.focus();
   });
+  moveIndicator();
   document.title=id==='home'?'CharlyMC · 一起，方块之间':`${tabs.find(tab=>tab.dataset.tab===id).textContent} · CharlyMC`;
   if(scroll)window.scrollTo({top:0,behavior:'instant'});
+  if(!canAnimate)return Promise.resolve();
+  const direction=tabIds.indexOf(id)>tabIds.indexOf(previousId)?1:-1;
+  const nextHeight=next.getBoundingClientRect().height;
+  previous.hidden=false;
+  previous.classList.add('tab-outgoing');
+  main.classList.add('tabs-moving');
+  const timing={duration:380,easing:'cubic-bezier(.22,.68,0,1)',fill:'both'};
+  const animations=[
+    previous.animate([{transform:'translateX(0)'},{transform:`translateX(${-direction*100}%)`}],timing),
+    next.animate([{transform:`translateX(${direction*100}%)`},{transform:'translateX(0)'}],timing),
+    main.animate([{height:previousHeight+'px'},{height:nextHeight+'px'}],timing)
+  ];
+  return new Promise(resolve=>{
+    let finished=false;
+    const cleanup=()=>{
+      if(finished)return;
+      finished=true;
+      animations.forEach(animation=>animation.cancel());
+      previous.hidden=true;
+      previous.classList.remove('tab-outgoing');
+      main.classList.remove('tabs-moving');
+      if(finishTransition===cleanup)finishTransition=null;
+      resolve();
+    };
+    finishTransition=cleanup;
+    Promise.all(animations.map(animation=>animation.finished)).then(cleanup,cleanup);
+  });
 }
 function navigate(id, jump) {
   if(location.hash !== '#'+id)history.pushState(null,'','#'+id);
-  activateTab(id,{scroll:!jump});
-  if(jump)requestAnimationFrame(()=>document.getElementById(jump)?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}));
+  activateTab(id,{scroll:!jump}).then(()=>{
+    if(jump&&activeTabId===id)document.getElementById(jump)?.scrollIntoView({behavior:reducedMotion.matches?'instant':'smooth'});
+  });
 }
 tabs.forEach((tab,index)=>{
   tab.addEventListener('click',()=>navigate(tab.dataset.tab));
@@ -49,9 +103,11 @@ tabs.forEach((tab,index)=>{
 });
 document.querySelectorAll('[data-panel-link], [data-jump]').forEach(link=>link.addEventListener('click',event=>{event.preventDefault();navigate(link.dataset.panelLink||'home',link.dataset.jump);}));
 function restoreTab(){activateTab(location.hash.slice(1)||'home',{scroll:true});}
+window.addEventListener('resize',()=>{if(finishTransition)finishTransition();});
+reducedMotion.addEventListener('change',()=>{if(finishTransition)finishTransition();});
 window.addEventListener('popstate',restoreTab);
 window.addEventListener('hashchange',restoreTab);
-activateTab(location.hash.slice(1)||'home');
+activateTab(location.hash.slice(1)||'home',{animate:false});
 let toastTimer;
 function toast(message){const el=document.querySelector('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}
 document.querySelectorAll('[data-copy]').forEach(button=>button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(button.dataset.copy);toast('服务器地址已复制，游戏里见！');}catch{toast('服务器地址：'+button.dataset.copy);}}));
