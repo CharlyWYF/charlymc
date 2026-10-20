@@ -6,3 +6,6 @@
 main{position:relative}.tabs-moving{overflow:hidden;overflow:clip}.tab-outgoing{position:absolute;top:0;left:0;width:100%;pointer-events:none}.tabs-moving>[role=tabpanel]{will-change:transform}.tabs{position:relative}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;height:3px;pointer-events:none;transition:transform 380ms cubic-bezier(.22,.68,0,1),width 380ms cubic-bezier(.22,.68,0,1)}.tab-indicator:after{content:'';position:absolute;left:20px;right:20px;top:0;bottom:0;background:#6e8b50}@media(max-width:1000px){.tab-indicator:after{left:16px;right:16px}}@media(max-width:700px){.tab-indicator:after{left:9px;right:9px}}@media(prefers-reduced-motion:reduce){.tab-indicator{transition:none}}
 /* Reserve horizontal gestures for tabs, while retaining native scrolling and zoom. */
 html,body{overscroll-behavior-x:none}main,.header{touch-action:pan-y pinch-zoom}
+
+/* Keep release notes compact while retaining clear separation. */
+.update-list article{padding:18px 0}.update-list h3{margin:0 0 6px}.release-log .update-list article{padding:12px 0}.release-log .update-list article:first-child{padding-top:0}@media(max-width:700px){.update-list article{padding:15px 0}.release-log .update-list article{padding:11px 0}}
