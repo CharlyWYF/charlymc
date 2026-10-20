@@ -1,3 +1,5 @@
+const source='https://cy23ivqg59.feishu.cn/wiki/XXj6wjCvliXPeOkxqFncqJqLncb';
+document.querySelector('#archive-list').innerHTML=[['4.0','历史版本'],['3.5','历史版本'],['3.4','含 AX'],['3.3','历史版本']].map(([v,label])=>`<a href="${source}#AGpodSE8DoetpextfF5cZt3Inrg" target="_blank" rel="noopener" aria-label="前往飞书查找 ${v} 版本"><strong>${v}</strong><span>${label}</span><i>↗</i></a>`).join('');
 let toastTimer;function toast(msg){let el=document.querySelector('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600)}
 document.querySelectorAll('[data-copy]').forEach(button=>button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(button.dataset.copy);toast('服务器地址已复制，游戏里见！')}catch{toast('服务器地址：'+button.dataset.copy)}}));
 const canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
