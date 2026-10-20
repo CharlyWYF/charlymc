@@ -3,9 +3,10 @@ const latest = releases[0];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function channels(release) {
   const links = [];
-  if (release.downloadUrl) links.push(`<a class="button primary" href="${escapeHtml(release.downloadUrl)}">下载 v${escapeHtml(release.version)} <span>↓</span></a>`);
+  if (release.downloadUrl) links.push(`<a class="button primary" href="${escapeHtml(release.downloadUrl)}">GitHub 下载 v${escapeHtml(release.version)} <span>↓</span></a>`);
   else if (release.githubUrl) links.push(`<a class="button primary" href="${escapeHtml(release.githubUrl)}" target="_blank" rel="noopener">GitHub 发布页 ↗</a>`);
   if (release.nasUrl) links.push(`<a class="text-link" href="${escapeHtml(release.nasUrl)}">NAS 备用下载 ↗</a>`);
+  if (window.CHARLY_DOWNLOADS?.feishuUrl) links.push(`<a class="text-link" href="${escapeHtml(window.CHARLY_DOWNLOADS.feishuUrl)}" target="_blank" rel="noopener">飞书备用下载 ↗</a>`);
   return links.length ? `<div class="download-channels">${links.join('')}</div>` : '<p class="pending-note">下载文件待补充</p>';
 }
 function changeRows(release) {

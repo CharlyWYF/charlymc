@@ -1,4 +1,7 @@
-// 首页与完整版本列表共用此数据。NAS 地址确认后填入 nasUrl，留空时不显示备用入口。
+// 首页与完整版本列表共用此数据；飞书总览供所有版本作为备用渠道。
+window.CHARLY_DOWNLOADS = {
+  feishuUrl: 'https://cy23ivqg59.feishu.cn/wiki/N09MwNOGZi3uKKkRRe9clvRZnje?table=tblj84f4FOKkOcVf&view=vew4alQfqu'
+};
 window.CHARLY_RELEASES = [
   {
     version: '4.1', size: '284.10 MB',
@@ -6,7 +9,7 @@ window.CHARLY_RELEASES = [
     summary: '新增《稻草雕像》，更新部分模组，并调整快捷键。',
     githubUrl: 'https://github.com/CharlyWYF/charlymc/releases/tag/4.1',
     downloadUrl: 'https://github.com/CharlyWYF/charlymc/releases/download/4.1/Charly.4.1.zip',
-    nasUrl: '',
+    nasUrl: 'https://ddns.charlyw.top:16666/MC/Charly%E6%95%B4%E5%90%88%E5%8C%85%5B4.1%5D.zip',
     changes: [
       {type:'新增',title:'稻草雕像',text:'添加《稻草雕像》'},
       {type:'更新',title:'模组更新',text:'更新部分过时mod'},
