@@ -2,21 +2,80 @@ const releases = window.CHARLY_RELEASES;
 const latest = releases[0];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function channels(release) {
-  const links = [];
-  if (release.downloadUrl) links.push(`<a class="button primary" href="${escapeHtml(release.downloadUrl)}">GitHub 下载 v${escapeHtml(release.version)} <span>↓</span></a>`);
-  else if (release.githubUrl) links.push(`<a class="button primary" href="${escapeHtml(release.githubUrl)}" target="_blank" rel="noopener">GitHub 发布页 ↗</a>`);
-  if (release.nasUrl) links.push(`<a class="text-link" href="${escapeHtml(release.nasUrl)}">NAS 备用下载 ↗</a>`);
-  if (window.CHARLY_DOWNLOADS?.feishuUrl) links.push(`<a class="text-link" href="${escapeHtml(window.CHARLY_DOWNLOADS.feishuUrl)}" target="_blank" rel="noopener">飞书备用下载 ↗</a>`);
-  return links.length ? `<div class="download-channels">${links.join('')}</div>` : '<p class="pending-note">下载文件待补充</p>';
+  return `<div class="download-channels"><button type="button" class="button primary download-trigger" data-download-version="${escapeHtml(release.version)}" aria-haspopup="dialog" aria-expanded="false" aria-controls="download-picker">下载 v${escapeHtml(release.version)} <span aria-hidden="true">↓</span></button></div>`;
 }
 function changeRows(release) {
   if (!release.changes.length) return '<p class="pending-note">此版本的更新日志待整理。</p>';
   return `<div class="update-list">${release.changes.map((change,index) => `<article><span class="change-tag ${change.type==='新增'?'add':change.type==='调整'?'opt':''}">${escapeHtml(change.type)}</span><div><h3>${escapeHtml(change.title)}</h3><p>${escapeHtml(change.text).replace(/`([^`]+)`/g, '<kbd>$1</kbd>')}</p></div><span class="row-num">${String(index+1).padStart(2,'0')}</span></article>`).join('')}</div>`;
 }
 document.querySelectorAll('[data-latest-version]').forEach(el => el.textContent=latest.version);
-document.querySelector('#latest-download').innerHTML = `<div class="download-panel"><div class="version-art"><span>CHARLYMC</span><strong>${escapeHtml(latest.version)}</strong><div class="block-logo" aria-hidden="true"><i></i><i></i><i></i></div><small>THE NEXT CHAPTER</small></div><div class="download-info"><div class="release-label">最新发布 <span>VERSION ${escapeHtml(latest.version)}</span></div><h3>${escapeHtml(latest.title)}</h3><p>${escapeHtml(latest.summary)}<br>下载整合包，跟着指南导入 PCL，就能和大家汇合。</p><div class="file-meta"><span>ZIP 整合包</span><span>${escapeHtml(latest.size)}</span><span>通过 PCL 导入</span></div>${channels(latest)}<small class="download-hint">GitHub 直接下载 · 下载后无需解压</small></div></div>`;
+document.querySelector('#latest-download').innerHTML = `<div class="download-panel"><div class="version-art"><span>CHARLYMC</span><strong>${escapeHtml(latest.version)}</strong><div class="block-logo" aria-hidden="true"><i></i><i></i><i></i></div><small>THE NEXT CHAPTER</small></div><div class="download-info"><div class="release-label">最新发布 <span>VERSION ${escapeHtml(latest.version)}</span></div><h3>${escapeHtml(latest.title)}</h3><p>${escapeHtml(latest.summary)}<br>下载整合包，跟着指南导入 PCL，就能和大家汇合。</p><div class="file-meta"><span>ZIP 整合包</span><span>${escapeHtml(latest.size)}</span><span>通过 PCL 导入</span></div>${channels(latest)}<small class="download-hint">选择下载渠道 · 下载后无需解压</small></div></div>`;
 document.querySelector('#latest-changelog').innerHTML=`<div class="update-layout"><div class="update-version"><strong>${escapeHtml(latest.version)}</strong><span>本次更新</span><p>给日常冒险，<br>添一点新鲜感。</p></div>${changeRows(latest)}</div>`;
 document.querySelector('#version-list').innerHTML=releases.map((release,index)=>`<article class="release-card"><header class="release-header"><div><span class="release-number">${escapeHtml(release.version)}</span>${index===0?'<span class="latest-badge">最新版本</span>':''}${release.note?`<span class="release-note">${escapeHtml(release.note)}</span>`:''}</div><span class="release-file">${release.size?escapeHtml(release.size)+' · ZIP 整合包':'历史版本'}</span></header><div class="release-body"><div class="release-log"><h2>更新日志</h2>${changeRows(release)}</div><div class="release-download"><h2>下载整合包</h2>${channels(release)}${release.downloadUrl?'<p class="pending-note">通过 PCL 导入，无需解压。</p>':''}</div></div></article>`).join('');
+
+// A shared top-layer popover stays above cards and never changes their layout.
+const downloadPicker=document.createElement('div');
+downloadPicker.id='download-picker';
+downloadPicker.className='download-picker';
+downloadPicker.setAttribute('popover','manual');
+downloadPicker.setAttribute('role','dialog');
+downloadPicker.setAttribute('aria-label','选择下载渠道');
+downloadPicker.setAttribute('data-no-swipe','');
+const supportsPopover=typeof downloadPicker.showPopover==='function';
+if(!supportsPopover)downloadPicker.hidden=true;
+document.body.append(downloadPicker);
+let downloadTrigger=null;
+function pickerIsOpen(){return supportsPopover?downloadPicker.matches(':popover-open'):!downloadPicker.hidden;}
+function closeDownloadPicker({restoreFocus=false}={}){
+  if(!pickerIsOpen())return;
+  if(supportsPopover)downloadPicker.hidePopover();else downloadPicker.hidden=true;
+  downloadTrigger?.setAttribute('aria-expanded','false');
+  if(restoreFocus)downloadTrigger?.focus();
+}
+function positionDownloadPicker(){
+  if(!downloadTrigger||!pickerIsOpen())return;
+  const rect=downloadTrigger.getBoundingClientRect();
+  const width=downloadPicker.offsetWidth,height=downloadPicker.offsetHeight;
+  const gap=10,edge=12;
+  const left=Math.max(edge,Math.min(rect.left,window.innerWidth-width-edge));
+  const top=rect.bottom+gap+height<=window.innerHeight-edge?rect.bottom+gap:Math.max(edge,rect.top-height-gap);
+  downloadPicker.style.left=left+'px';
+  downloadPicker.style.top=top+'px';
+}
+function showDownloadPicker(trigger){
+  if(downloadTrigger===trigger&&pickerIsOpen()){closeDownloadPicker();return;}
+  closeDownloadPicker();
+  const release=releases.find(item=>item.version===trigger.dataset.downloadVersion);
+  if(!release)return;
+  downloadTrigger=trigger;
+  const sources=[
+    {name:'GitHub',description:'主下载',icon:'GH',url:release.downloadUrl||release.githubUrl},
+    {name:'NAS',description:'备用直链',icon:'NAS',url:release.nasUrl},
+    {name:'飞书',description:'所有版本总览',icon:'飞',url:window.CHARLY_DOWNLOADS?.feishuUrl}
+  ];
+  downloadPicker.innerHTML=`<p class="picker-label">v${escapeHtml(release.version)} · 选择下载渠道</p><div class="picker-options">${sources.map(source=>{
+    const content=`<span class="channel-icon" aria-hidden="true">${source.icon}</span><span class="channel-name">${source.name}<small>${source.url?source.description:'此版本暂未提供'}</small></span><span class="channel-arrow" aria-hidden="true">${source.url?'↗':'—'}</span>`;
+    return source.url?`<a class="channel-option" href="${escapeHtml(source.url)}"${source.name==='飞书'?' target="_blank" rel="noopener"':''}>${content}</a>`:`<button type="button" class="channel-option" disabled>${content}</button>`;
+  }).join('')}</div>`;
+  if(supportsPopover)downloadPicker.showPopover();else downloadPicker.hidden=false;
+  trigger.setAttribute('aria-expanded','true');
+  positionDownloadPicker();
+  downloadPicker.querySelector('a')?.focus({preventScroll:true});
+}
+document.addEventListener('click',event=>{
+  const trigger=event.target.closest('[data-download-version]');
+  if(trigger){showDownloadPicker(trigger);return;}
+  if(!downloadPicker.contains(event.target))closeDownloadPicker();
+  else if(event.target.closest('a'))closeDownloadPicker();
+});
+downloadPicker.addEventListener('toggle',()=>{
+  if(!pickerIsOpen())downloadTrigger?.setAttribute('aria-expanded','false');
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&pickerIsOpen()){event.preventDefault();closeDownloadPicker({restoreFocus:true});}
+});
+window.addEventListener('scroll',()=>{if(pickerIsOpen())positionDownloadPicker();},true);
+window.addEventListener('resize',()=>closeDownloadPicker());
 
 const tabs = [...document.querySelectorAll('[role="tab"]')];
 const tabIds = tabs.map(tab=>tab.dataset.tab);
@@ -36,6 +95,7 @@ function moveIndicator() {
 }
 new ResizeObserver(moveIndicator).observe(document.querySelector('.tabs'));
 function activateTab(id, {focus=false, scroll=false, animate=true}={}) {
+  closeDownloadPicker();
   if (!tabIds.includes(id)) id='home';
   if(finishTransition)finishTransition();
   const previousId=activeTabId;
