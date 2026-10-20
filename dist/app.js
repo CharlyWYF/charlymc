@@ -10,7 +10,7 @@ function channels(release) {
 }
 function changeRows(release) {
   if (!release.changes.length) return '<p class="pending-note">此版本的更新日志待整理。</p>';
-  return `<div class="update-list">${release.changes.map((change,index) => `<article><span class="change-tag ${change.type==='新增'?'add':change.type==='调整'?'opt':''}">${escapeHtml(change.type)}</span><div><h3>${escapeHtml(change.title)}</h3><p>${escapeHtml(change.text)}</p></div><span class="row-num">${String(index+1).padStart(2,'0')}</span></article>`).join('')}</div>`;
+  return `<div class="update-list">${release.changes.map((change,index) => `<article><span class="change-tag ${change.type==='新增'?'add':change.type==='调整'?'opt':''}">${escapeHtml(change.type)}</span><div><h3>${escapeHtml(change.title)}</h3><p>${escapeHtml(change.text).replace(/`([^`]+)`/g, '<kbd>$1</kbd>')}</p></div><span class="row-num">${String(index+1).padStart(2,'0')}</span></article>`).join('')}</div>`;
 }
 document.querySelectorAll('[data-latest-version]').forEach(el => el.textContent=latest.version);
 document.querySelector('#latest-download').innerHTML = `<div class="download-panel"><div class="version-art"><span>CHARLYMC</span><strong>${escapeHtml(latest.version)}</strong><div class="block-logo" aria-hidden="true"><i></i><i></i><i></i></div><small>THE NEXT CHAPTER</small></div><div class="download-info"><div class="release-label">最新发布 <span>VERSION ${escapeHtml(latest.version)}</span></div><h3>${escapeHtml(latest.title)}</h3><p>${escapeHtml(latest.summary)}<br>下载整合包，跟着指南导入 PCL，就能和大家汇合。</p><div class="file-meta"><span>ZIP 整合包</span><span>${escapeHtml(latest.size)}</span><span>通过 PCL 导入</span></div>${channels(latest)}<small class="download-hint">GitHub 直接下载 · 下载后无需解压</small></div></div>`;
