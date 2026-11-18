@@ -54,6 +54,7 @@ const groups = {
     ['//set air', '清空整个选区。'],
     ['//replace dirt grass_block', '把选区内的泥土替换成草方块。'],
     ['//replace air glass', '用玻璃填充选区内的空气。'],
+    ['//replace "##minecraft:leaves %25" air', '随机疏叶。树叶标签限定目标，%25 表示每块匹配的树叶有 25% 的概率被替换为空气。把 %25 改成 %10 可以少删一些。', ['##minecraft:leaves %25', 'air']],
     ['//set 70%stone,30%andesite', '按 70∶30 的权重随机混铺石头和安山岩。'],
     ['//walls stone_bricks', '沿选区的四个侧面建石砖墙。'],
     ['//faces glass', '将长方体选区的六个外表面设为玻璃。'],
@@ -430,7 +431,10 @@ function commandBuilder(key, fields) {
       if (!control.validity.valid || (control.required && !value)) valid = false;
       if (value) {
         if (field.prefix) parts.push(field.prefix);
-        parts.push(field.type === 'number' ? String(control.valueAsNumber) : value);
+        const argument = field.blockPicker && /\s/.test(value) && !/^".*"$/.test(value)
+          ? '"' + value.replaceAll('"', '\\"') + '"'
+          : value;
+        parts.push(field.type === 'number' ? String(control.valueAsNumber) : argument);
       }
     });
     copy.disabled = !valid;
@@ -521,10 +525,20 @@ function openCommand(key, family, card) {
     reference.append(parameters);
   }
   reference.append(element('h4', '示例'));
-  for (const [command, meaning] of family.entries) {
+  for (const [command, meaning, preset] of family.entries) {
     const example = document.createElement('div');
     example.className = 'example';
     example.append(element('code', command), element('p', meaning));
+    if (preset) {
+      const use = element('button', '在编辑器中使用');
+      use.onclick = () => {
+        const inputs = editor.querySelectorAll('input[type=text]');
+        preset.forEach((value, index) => { inputs[index].value = value; });
+        // Update the preview without opening the material suggestions.
+        editor.querySelector('.builder').dispatchEvent(new Event('input'));
+      };
+      example.append(use);
+    }
     reference.append(example);
   }
   const editor = document.createElement('section');
