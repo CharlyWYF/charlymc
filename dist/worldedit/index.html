@@ -86,6 +86,7 @@ Object.assign(groups, {
   '选区进阶': [
     ['//pos1 100,64,200', '按 x,y,z 坐标设置第一个角。'],
     ['//sel cuboid', '切换为长方体选区。'],
+    ['//sel extend', '扩展选区模式。左键设定起点，右键点击方块，把现有长方体选区扩展到包含该方块。'],
     ['//sel poly', '切换为多边形柱体选区。左键开始，右键添加顶点。'],
     ['//sel', '清除当前选区。'],
     ['//chunk', '选择当前区块。'],
@@ -315,7 +316,7 @@ const heightMap = blockField('地表高度遮罩（可选）');
 const builders = {
   '//pos1': [coordinates], '//pos2': [coordinates],
   '//sel': [{ label: '选区形状', value: '', options: {
-    '': '清除选区', cuboid: '长方体', poly: '多边形柱体', ellipsoid: '椭球', sphere: '球体', cyl: '圆柱'
+    '': '清除选区', cuboid: '长方体', extend: '扩展选区模式', poly: '多边形柱体', ellipsoid: '椭球', sphere: '球体', cyl: '圆柱'
   } }],
   '//expand': [{ label: '扩展方式', value: 'direction', options: { direction: '指定方向', vert: '整个世界高度' } },
     number('扩展格数', 5), number('反向扩展格数', 0, 0), direction('up')],
