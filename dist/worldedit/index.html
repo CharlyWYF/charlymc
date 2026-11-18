@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>创世神指令备忘 · WorldEdit</title>
+<style>
+:root{color-scheme:dark;font:16px system-ui,sans-serif;background:#111913;color:#edf4e9;--muted:#b4c4b7;--green:#b8e995;--line:#405242}
+*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:48px 22px}h1{font-size:clamp(2rem,6vw,4rem);margin:8px 0 20px;letter-spacing:-.04em}small,a,code{color:var(--green)}p,dd{color:var(--muted);line-height:1.55}button,input,select{font:inherit;color:inherit;background:#253529;border:1px solid var(--line);border-radius:8px;padding:9px 12px}button{cursor:pointer}button:hover,button[aria-pressed=true]{background:var(--green);color:#152318}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--green);outline-offset:3px}#search{width:100%;padding:14px;margin-bottom:12px}nav{display:flex;gap:8px;flex-wrap:wrap}#list{columns:285px;column-gap:12px}.card{width:100%;display:block;break-inside:avoid;text-align:left;margin-bottom:12px;padding:16px;background:#1e2c22}.card:hover{background:#293f2c;color:inherit}.card span{display:block;margin-top:7px;color:var(--muted);line-height:1.45}.card small{display:block;margin-top:10px}footer{margin-top:26px}dialog{width:min(720px,calc(100% - 24px));max-height:90dvh;padding:0;background:#19261d;color:inherit;border:1px solid var(--line);border-radius:14px}dialog::backdrop{background:#000a}.detail-head{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 22px;background:#19261d;border-bottom:1px solid var(--line);z-index:1}.detail-head h2{margin:0;overflow-wrap:anywhere}.detail-body{padding:4px 22px 22px}.detail-body section{margin-top:22px}.row,.builder>div{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:8px 0}.row code,.builder code{overflow-wrap:anywhere}dt{margin-top:9px}dd{margin:4px 0 10px}.builder{padding:14px;border:1px solid var(--line);border-radius:10px;background:#121c15}.builder h3{margin-top:0}.builder label{display:block;margin:8px 0}.builder input[type=text]{display:block;width:100%;margin-top:4px}.builder input[type=number]{width:7em}.builder output{display:block;color:var(--muted)}#feedback{min-height:1.5em;margin-bottom:0}
+#list{columns:auto}.category{margin:26px 0}.category h2{font-size:1.1rem;margin:0 0 12px}.cards{columns:285px;column-gap:12px}dialog{width:min(1050px,calc(100% - 24px));overflow:hidden}.detail-body{display:grid;grid-template-columns:1fr 1fr;align-items:start;padding:0;max-height:calc(90dvh - 68px);overflow:auto}.detail-body>section{margin:0;padding:18px 22px;min-width:0}.detail-body h3{margin:0 0 12px}.editor{border-left:1px solid var(--line);position:sticky;top:0;max-height:calc(90dvh - 70px);overflow:auto}.builder{padding:0;border:0;background:none}.builder .command-bar,.editor .command-bar{position:sticky;top:-18px;background:#19261d;padding:10px 0;margin:0 0 10px;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px}.command-bar code{overflow-wrap:anywhere}.command-bar button{flex:none}.example{margin-bottom:14px}.example p{margin:4px 0 0}.editor #feedback{margin-top:8px}@media(max-width:680px){.detail-body{display:block}.editor{position:static;max-height:none;overflow:visible;border-left:0;border-top:1px solid var(--line)}}
+.detail-head{padding:12px 24px}.detail-head h2{font:600 1.25rem ui-monospace,monospace;color:var(--green)}.close{width:40px;height:40px;padding:0;font:26px/1 system-ui;background:transparent;border-color:transparent;color:var(--muted)}.close:hover{background:#2a3b2e;color:#fff}.detail-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch}.detail-body>section{padding:22px 24px}.detail-body h4{margin:24px 0 10px;border-bottom:1px solid var(--line);padding-bottom:8px}.editor{background:#152019}.builder .command-bar,.editor .command-bar{top:-22px;margin:0;padding:10px 10px 10px 15px;border:1px solid #567657;border-radius:10px;background:#0d1610;min-height:54px;box-shadow:0 3px 12px #0a110d60}.command-bar code{font-size:.94rem;line-height:1.45}.command-bar button{border:0;background:var(--green);color:#152318;font-size:.85rem;font-weight:650}.command-bar button:hover{background:#d2f5bb}.builder .editor-options{display:grid;gap:10px;margin:16px 0 0}.builder label{margin:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #344637;border-radius:8px;font-size:.9rem;line-height:1.4}.builder label:has(input[type=text]){display:block}.builder input{margin:0;max-width:100%;accent-color:var(--green)}.builder label.flag-option{justify-content:flex-start}.flag-option input{order:-1;width:16px;height:16px;flex:none}.builder output:empty,#feedback:empty{display:none}.builder output,#feedback{margin:10px 0 0;font-size:.85rem}@media(max-width:680px){.detail-body>section{padding:16px}.detail-head{padding-inline:16px}.builder .command-bar,.editor .command-bar{top:0}}
+.detail-body>section>p:first-child{margin-top:0}
+dialog::backdrop{background:transparent}
+dialog[open]::backdrop{background:#000a}
+dialog.morphing{overflow:hidden}
+dialog.morphing::backdrop{background:#000a}
+.morph-surface{position:fixed;pointer-events:none;margin:0}
+.morph-surface{background:#19261d;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.morph-label{position:absolute;inset:0;padding:16px;overflow:hidden}.morph-label span{display:block;margin-top:7px;color:var(--muted);line-height:1.45}.morph-surface{background:#1e2c22}
+</style>
+<main>
+<small>Minecraft Java 版 · WorldEdit 7.4</small>
+<h1>创世神指令备忘</h1>
+<input id="search" type="search" aria-label="搜索命令" placeholder="搜索命令、参数或用途">
+<nav aria-label="筛选类别"></nav>
+<p id="count" role="status"></p>
+<div id="list"></div>
+<footer><a href="https://worldedit.enginehub.org/en/latest/commands/">WorldEdit 官方命令索引</a></footer>
+</main>
+<dialog aria-labelledby="command-title">
+<div class="detail-head"><h2 id="command-title"></h2><form method="dialog"><button class="close" aria-label="关闭详情" title="关闭详情">×</button></form></div>
+<div class="detail-body" id="detail"></div>
+</dialog>
+<script>
+const groups = {
+  '选区与撤销': [
+    ['//wand', '获取选区工具。默认是木斧，左键和右键分别选择两个对角。'],
+    ['//pos1', '用当前位置设置第一个角。'],
+    ['//pos2', '用当前位置设置第二个角。'],
+    ['//hpos1', '用准星指向的方块设置第一个角。'],
+    ['//hpos2', '用准星指向的方块设置第二个角。'],
+    ['//size', '查看选区尺寸和体积。'],
+    ['//expand 5 up', '向上扩展选区 5 格。'],
+    ['//shift 5 east', '将选区向东移 5 格，方块留在原处。'],
+    ['//undo', '撤销上一次 WorldEdit 操作。'],
+    ['//undo 3', '撤销最近 3 次 WorldEdit 操作。'],
+    ['//redo', '重做刚撤销的操作。'],
+    ['//help paste', '在游戏里查看粘贴命令的用法。']
+  ],
+  '填充与建造': [
+    ['//set stone', '将整个选区填成石头。'],
+    ['//set air', '清空整个选区。'],
+    ['//replace dirt grass_block', '把选区内的泥土替换成草方块。'],
+    ['//replace air glass', '用玻璃填充选区内的空气。'],
+    ['//set 70%stone,30%andesite', '按 70∶30 的权重随机混铺石头和安山岩。'],
+    ['//walls stone_bricks', '沿选区的四个侧面建石砖墙。'],
+    ['//faces glass', '将长方体选区的六个外表面设为玻璃。'],
+    ['//stack 4 east', '向东连续复制 4 份。'],
+    ['//move 5 up', '把选区内的方块向上移动 5 格。']
+  ],
+  '复制与粘贴': [
+    ['//copy', '复制选区，把当前站位作为粘贴和旋转的参考点。'],
+    ['//cut', '剪切选区，原处默认填空气。'],
+    ['//paste', '以当前站位为参考点粘贴，剪贴板里的空气也会覆盖方块。'],
+    ['//paste -a', '粘贴时跳过剪贴板里的空气。'],
+    ['//paste -n', '只框出预计粘贴的范围。'],
+    ['//paste -o', '以复制时的站位为参考点原地粘贴。'],
+    ['//rotate 90', '将剪贴板绕竖轴顺时针旋转 90 度。'],
+    ['//flip east', '沿东西方向镜像剪贴板内容。'],
+    ['//schem save house', '把剪贴板保存为名为 house 的结构文件。'],
+    ['//schem load house', '把 house 结构文件载入剪贴板。']
+  ],
+  '形状与笔刷': [
+    ['//sphere stone 5', '生成半径 5 的实心石球。'],
+    ['//hsphere glass 5', '生成半径 5 的空心玻璃球。'],
+    ['//cyl stone 5 8', '生成半径 5、高 8 的实心石圆柱。'],
+    ['//hcyl glass 5 8', '生成半径 5、高 8 的空心玻璃圆柱。'],
+    ['/brush sphere stone 3', '给手持物品绑定半径 3 的石球笔刷，右键使用。'],
+    ['/brush smooth 4 2', '绑定平滑笔刷，半径 4，每次执行 2 轮。'],
+    ['/tool none', '解除当前手持物品绑定的工具或笔刷。']
+  ]
+};
+Object.assign(groups, {
+  '选区进阶': [
+    ['//pos1 100,64,200', '按 x,y,z 坐标设置第一个角。'],
+    ['//sel cuboid', '切换为长方体选区。'],
+    ['//sel poly', '切换为多边形柱体选区。左键开始，右键添加顶点。'],
+    ['//sel', '清除当前选区。'],
+    ['//chunk', '选择当前区块。'],
+    ['//expand vert', '把选区扩展到世界的整个高度。'],
+    ['//expand 5 2 north', '向北扩展 5 格，同时向南扩展 2 格。'],
+    ['//contract 3 up', '收缩选区 3 格，方向朝上。'],
+    ['//outset 2', '将选区向外扩展 2 格。'],
+    ['//inset 1', '将选区向内缩小 1 格。'],
+    ['//count stone', '统计选区中的石头数量。'],
+    ['//distr', '查看选区内各类方块的数量和比例。']
+  ],
+  '材料与地形': [
+    ['//set stone,andesite', '等权重随机填充石头和安山岩。'],
+    ['//replace dirt,grass_block stone', '逗号连接多个匹配条件，将泥土或草方块换成石头。'],
+    ['//replace !air glass', '感叹号表示取反，将非空气方块换成玻璃。'],
+    ['//replace oak_log[axis=y] spruce_log[axis=y]', '用方括号匹配木头的轴向，并指定新方块的状态。'],
+    ['//gmask #existing', '设置全局遮罩，使受其约束的编辑仅作用于非空气方块。'],
+    ['//gmask', '清除全局遮罩。'],
+    ['//overlay grass_block', '在选区内的地表上覆盖草方块。'],
+    ['//center glowstone', '在选区中心放置荧石。'],
+    ['//naturalize', '将选区地表改成泥土表层、下方为石头的地形。'],
+    ['//smooth 2 grass_block,dirt,stone', '平滑选区 2 轮，按草方块、泥土和石头确定地表高度。'],
+    ['//fill stone 8 3', '在脚下附近填洞。材料为石头，半径 8 格，深度 3 格。'],
+    ['//fillr dirt 8 3', '递归填洞，允许向下延伸。半径 8 格，深度 3 格。'],
+    ['//drain -w 15', '排掉附近半径 15 格内的液体，-w 同时移除方块的含水状态。'],
+    ['//regen -c', '按世界种子重新生成选区，将结果放入剪贴板。']
+  ],
+  '复制参数': [
+    ['//copy -e -b', '-e 将实体加入剪贴板，-b 同时记录生物群系。'],
+    ['//copy -m stone,bricks', '-m 限制复制来源，只采集石头或砖块。'],
+    ['//paste -a -e -b', '跳过空气，并粘贴剪贴板中已记录的实体和生物群系。'],
+    ['//paste -a -s', '-a 跳过空气，-s 将选区设为粘贴后的范围。'],
+    ['//paste -m stone', '-m 检查剪贴板里的来源方块，只粘贴石头。'],
+    ['//paste -n -o', '只选中预计原地粘贴的范围。'],
+    ['//rotate 0 90 0', '角度顺序是 Y、X、Z。此例绕 X 轴转 90°。'],
+    ['//stack -a -s 4 up', '向上连续复制 4 份，跳过空气，并将选区移到最后一份。'],
+    ['//stack -r 4 0,8,0', '-r 使用方块作为偏移单位，每份向上偏移 8 格。'],
+    ['//move -a -s 5 up', '向上移动 5 格，跳过空气，并将选区移动到目的地。'],
+    ['//move 5 east stone', '向东移动 5 格，用石头填补移动后留下的位置。'],
+    ['//schem list', '列出可载入的结构文件。']
+  ],
+  '形状与笔刷参数': [
+    ['//sphere stone 8,4,8', '三个半径依次对应 X、Y、Z，生成横向较宽的椭球。'],
+    ['//sphere -r stone 5', '-r 抬高生成位置，使球体底部位于放置点。'],
+    ['//cyl stone 8,4 5', '两个半径分别对应 X、Z，末尾 5 是圆柱高度。'],
+    ['//line stone 2', '在长方体选区的两个角之间画线，半径为 2。'],
+    ['/brush sphere -h glass 5', '-h 绑定空心球笔刷，半径 5。'],
+    ['/brush cylinder -h stone 5 8', '绑定空心石圆柱笔刷，半径 5，高 8。'],
+    ['/brush clipboard -a', '绑定剪贴板笔刷，每次右键粘贴并跳过空气。'],
+    ['/mask stone,dirt', '给手持笔刷设置遮罩，使其只修改现有的石头或泥土。'],
+    ['/mask', '清除手持笔刷的遮罩。'],
+    ['/range 30', '将手持笔刷的最大使用距离设为 30 格。'],
+    ['/size 4', '将手持笔刷的半径设为 4。'],
+    ['/tool info', '给手持物品绑定查询工具，用于查看点击方块的信息。']
+  ]
+});
+
+const parameterGuides = {
+  '//paste': {
+    syntax: '//paste [-a] [-s] [-n] [-o] [-e] [-b] [-m <来源遮罩>]',
+    options: [
+      ['-a', '跳过剪贴板里的空气，保留目的地对应位置的方块。'],
+      ['-s', '粘贴后，把当前选区设为粘贴范围。'],
+      ['-n', '只设置预计粘贴的选区，不放置方块。已包含 -s 的效果。'],
+      ['-o', '以复制时的原位置为参考点。默认以当前放置点为参考点。'],
+      ['-e', '粘贴剪贴板中已记录的实体。可先用 //copy -e 复制实体。'],
+      ['-b', '粘贴剪贴板中已记录的生物群系。可先用 //copy -b 复制群系。'],
+      ['-m <来源遮罩>', '按剪贴板里的来源方块筛选。例如 -m stone 只粘贴石头。']
+    ],
+    examples: ['//paste -a', '//paste -a -s', '//paste -n -o']
+  }
+};
+
+const commandFamilies = new Map();
+for (const [name, entries] of Object.entries(groups)) {
+  for (const [command, description] of entries) {
+    const words = command.split(' ');
+    const key = words[0].startsWith('//') && words[0] !== '//schem'
+      ? words[0]
+      : ['/brush', '/tool', '//schem'].includes(words[0])
+        ? words.slice(0, 2).join(' ')
+        : words[0];
+    if (!commandFamilies.has(key)) commandFamilies.set(key, { name, entries: [] });
+    commandFamilies.get(key).entries.push([command, description]);
+  }
+}
+
+const descriptions = {
+  '//wand':'获取选区工具。','//pos1':'设置选区的第一个点。','//pos2':'设置选区的第二个点。',
+  '//hpos1':'用准星指向的方块设置选区起点。','//hpos2':'用准星指向的方块设置选区终点。',
+  '//size':'查看选区尺寸与体积。','//expand':'扩展选区。','//shift':'平移选区。','//undo':'撤销编辑操作。','//redo':'重做已撤销的操作。','//help':'查看命令帮助。',
+  '//set':'用指定材料填充选区。','//replace':'替换选区内匹配的方块。','//walls':'沿选区建造四面墙。','//faces':'填充选区的外表面。','//stack':'沿指定方向重复复制选区。','//move':'移动选区内的方块。',
+  '//copy':'将选区复制到剪贴板。','//cut':'将选区剪切到剪贴板。','//paste':'粘贴剪贴板的内容。','//rotate':'旋转剪贴板内容。','//flip':'镜像剪贴板内容。',
+  '//schem save':'将剪贴板保存为结构文件。','//schem load':'从结构文件载入剪贴板。','//schem list':'列出可用的结构文件。',
+  '//sphere':'生成实心球体或椭球体。','//hsphere':'生成空心球体或椭球体。','//cyl':'生成实心圆柱。','//hcyl':'生成空心圆柱。','//line':'在选区的两个角之间画线。',
+  '/brush sphere':'绑定球形笔刷。','/brush smooth':'绑定地形平滑笔刷。','/brush cylinder':'绑定圆柱笔刷。','/brush clipboard':'绑定剪贴板笔刷。',
+  '/tool none':'解除手持物品绑定的工具。','/tool info':'绑定方块信息查询工具。',
+  '//sel':'切换选区形状或清除选区。','//chunk':'选择当前区块。','//contract':'从指定方向收缩选区。','//outset':'向外扩大选区。','//inset':'向内缩小选区。','//count':'统计选区内匹配的方块。','//distr':'查看选区内方块的分布。',
+  '//gmask':'设置或清除全局遮罩。','//overlay':'在选区地表覆盖指定材料。','//center':'在选区中心放置方块。','//naturalize':'将选区整理为自然地层。','//smooth':'平滑选区内的地形。','//fill':'填充附近的孔洞。','//fillr':'递归填充附近的孔洞。','//drain':'移除附近的液体。','//regen':'按种子重新生成选区。',
+  '/mask':'设置或清除手持笔刷的遮罩。','/range':'调整手持笔刷的使用距离。','/size':'调整手持笔刷的半径。'
+};
+const catalog = {
+  '选区与统计': '//wand //pos1 //pos2 //hpos1 //hpos2 //sel //chunk //size //count //distr //expand //contract //shift //outset //inset',
+  '填充与建造': '//set //replace //walls //faces //center //line //sphere //hsphere //cyl //hcyl',
+  '剪贴板与结构': '//copy|//cut|//paste|//rotate|//flip|//stack|//move|//schem save|//schem load|//schem list',
+  '地形与遮罩': '//gmask //overlay //naturalize //smooth //fill //fillr //drain //regen',
+  '笔刷与工具': '/brush sphere|/brush smooth|/brush cylinder|/brush clipboard|/mask|/range|/size|/tool info|/tool none',
+  '历史与帮助': '//undo //redo //help'
+};
+
+const directions = { east: '东', west: '西', north: '北', south: '南', up: '上', down: '下' };
+const flag = (name, label) => ({ label: name + ' · ' + label, flag: name, type: 'checkbox' });
+const input = (label, value = '', prefix = '') => ({ label, value, prefix });
+const number = (label, value, min = 1) => ({ label, value, min, type: 'number' });
+const direction = (value = 'east') => ({ label: '方向', value, options: directions });
+const materials = value => input('材料或方块模式', value);
+const air = flag('-a', '跳过空气');
+const entities = flag('-e', '包含实体');
+const biomes = flag('-b', '包含生物群系');
+const source = input('来源遮罩（可选）', '', '-m');
+const coordinates = input('坐标 x,y,z（留空使用当前位置）');
+const heightMap = input('地表高度遮罩（可选）');
+const builders = {
+  '//pos1': [coordinates], '//pos2': [coordinates],
+  '//sel': [{ label: '选区形状', value: '', options: {
+    '': '清除选区', cuboid: '长方体', poly: '多边形柱体', ellipsoid: '椭球', sphere: '球体', cyl: '圆柱'
+  } }],
+  '//expand': [{ label: '扩展方式', value: 'direction', options: { direction: '指定方向', vert: '整个世界高度' } },
+    number('扩展格数', 5), number('反向扩展格数', 0, 0), direction('up')],
+  '//shift': [number('移动格数', 5), direction()],
+  '//contract': [number('收缩格数', 3), direction('up')],
+  '//inset': [number('缩小格数', 1)], '//outset': [number('扩大格数', 2)],
+  '//count': [input('方块遮罩', 'stone')],
+  '//undo': [number('撤销次数', 1)], '//redo': [number('重做次数', 1)],
+  '//help': [input('命令名', 'paste')],
+  '//set': [materials('stone')],
+  '//replace': [input('来源遮罩（可选）'), materials('glass')],
+  '//walls': [materials('stone_bricks')], '//faces': [materials('glass')],
+  '//overlay': [materials('grass_block')], '//center': [materials('glowstone')],
+  '//stack': [air, flag('-s', '选中最后一份副本'), entities, biomes,
+    number('复制份数', 4), direction(), source],
+  '//move': [air, flag('-s', '选中移动后的范围'), entities, biomes,
+    number('移动格数', 5), direction('up'), input('原处填充材料（可选）'), source],
+  '//copy': [entities, biomes, source], '//cut': [entities, biomes, input('原处填充材料（可选）'), source],
+  '//paste': [air, flag('-s', '选中粘贴范围'), flag('-n', '只预览选区'),
+    flag('-o', '原地粘贴'), entities, biomes, source],
+  '//rotate': [number('Y 轴角度', 90, -360), number('X 轴角度', 0, -360), number('Z 轴角度', 0, -360)],
+  '//flip': [direction()],
+  '//schem save': [input('文件名', 'house')], '//schem load': [input('文件名', 'house')],
+  '//sphere': [flag('-r', '抬高到球底'), materials('stone'), input('半径（单值或 X,Y,Z）', '5')],
+  '//hsphere': [flag('-r', '抬高到球底'), materials('glass'), input('半径（单值或 X,Y,Z）', '5')],
+  '//cyl': [materials('stone'), input('半径（单值或 X,Z）', '5'), number('高度', 8)],
+  '//hcyl': [materials('glass'), input('半径（单值或 X,Z）', '5'), number('高度', 8)],
+  '//line': [materials('stone'), number('半径', 2, 0)],
+  '//smooth': [number('平滑轮数', 2), heightMap],
+  '//fill': [materials('stone'), number('半径', 8), number('深度', 3)],
+  '//fillr': [materials('dirt'), number('半径', 8), number('深度', 3)],
+  '//drain': [flag('-w', '移除含水状态'), number('半径', 15)],
+  '//regen': [flag('-c', '生成到剪贴板'), biomes, input('种子（可选）')],
+  '//gmask': [input('全局遮罩（留空清除）', '#existing')],
+  '/brush sphere': [flag('-h', '空心'), materials('stone'), number('半径', 3)],
+  '/brush cylinder': [flag('-h', '空心'), materials('stone'), number('半径', 5), number('高度', 8)],
+  '/brush smooth': [number('半径', 4), number('平滑轮数', 2), heightMap],
+  '/brush clipboard': [air, entities, biomes, source],
+  '/mask': [input('笔刷遮罩（留空清除）', 'stone,dirt')],
+  '/range': [number('使用距离', 30)], '/size': [number('笔刷半径', 4)]
+};
+const builderStates = new Map();
+
+function commandBuilder(key, fields) {
+  const state = builderStates.get(key) ?? { values: [] };
+  builderStates.set(key, state);
+  const builder = document.createElement('section');
+  builder.className = 'builder';
+
+
+  const options = document.createElement('div');
+  options.className = 'editor-options';
+  const controls = fields.map((field, index) => {
+    const control = document.createElement(field.options ? 'select' : 'input');
+    if (field.options) {
+      for (const [value, label] of Object.entries(field.options)) {
+        const option = element('option', label);
+        option.value = value;
+        control.append(option);
+      }
+    } else {
+      control.type = field.type ?? 'text';
+      if (field.type === 'number') {
+        control.step = '1';
+        control.min = field.min;
+        control.max = 2147483647;
+        control.required = true;
+      } else if (field.type !== 'checkbox') {
+        control.required = Boolean(field.value) && !field.label.includes('留空');
+      }
+    }
+    if (field.type === 'checkbox') control.checked = state.values[index] ?? false;
+    else control.value = state.values[index] ?? field.value;
+    const label = element('label', field.label + ' ');
+    label.append(control);
+    if (field.flag) label.className = 'flag-option';
+    options.append(label);
+    return control;
+  });
+
+  const row = document.createElement('div');
+  const preview = element('code', '');
+  const copy = element('button', '复制');
+  const status = element('output', '');
+  status.setAttribute('aria-live', 'polite');
+  row.className = 'command-bar';
+  preview.setAttribute('aria-live', 'polite');
+  row.append(preview, copy);
+  builder.append(row, options, status);
+
+  function update() {
+    const vertical = key === '//expand' && controls[0].value === 'vert';
+    const parts = [key];
+    let valid = true;
+    fields.forEach((field, index) => {
+      const control = controls[index];
+      if (field.type === 'checkbox') {
+        state.values[index] = control.checked;
+        if (control.checked) parts.push(field.flag);
+        return;
+      }
+      const value = control.value.trim();
+      state.values[index] = control.value;
+      if (key === '//expand') {
+        control.disabled = index > 0 && vertical;
+        if (control.disabled || (index === 0 && !vertical) || (index === 2 && value === '0')) return;
+      }
+      if (!control.validity.valid || (control.required && !value)) valid = false;
+      if (value) {
+        if (field.prefix) parts.push(field.prefix);
+        parts.push(field.type === 'number' ? String(control.valueAsNumber) : value);
+      }
+    });
+    copy.disabled = !valid;
+    status.textContent = valid ? '' : '请检查必填项和数值范围。';
+    preview.textContent = valid ? parts.join(' ') : key + ' …';
+  }
+
+  builder.addEventListener('input', update);
+  copy.onclick = () => copyCommand(preview.textContent, preview);
+  copy.setAttribute('aria-label', '复制生成的指令');
+  update();
+  return builder;
+}
+
+
+const search = document.querySelector('#search');
+const dialog = document.querySelector('dialog');
+const detail = document.querySelector('#detail');
+const list = document.querySelector('#list');
+const count = document.querySelector('#count');
+const nav = document.querySelector('nav');
+const categories = ['全部', ...Object.keys(catalog)];
+let category = '全部';
+
+function element(tag, value) {
+  const node = document.createElement(tag);
+  node.textContent = value;
+  return node;
+}
+
+async function copyCommand(command, code) {
+  const feedback = document.querySelector('#feedback');
+  try {
+    await navigator.clipboard.writeText(command);
+    feedback.textContent = '已复制 ' + command;
+  } catch {
+    const range = document.createRange();
+    range.selectNodeContents(code);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    feedback.textContent = '已选中指令，请按 Ctrl+C 或 ⌘C 复制。';
+  }
+}
+
+function commandBar(command) {
+  const row = document.createElement('div');
+  row.className = 'command-bar';
+  const code = element('code', command);
+  const copy = element('button', '复制');
+  copy.onclick = () => copyCommand(command, code);
+  row.append(code, copy);
+  return row;
+}
+
+function openCommand(key, family, card) {
+  document.querySelector('#command-title').textContent = key;
+  const guide = parameterGuides[key];
+  const fields = builders[key] ?? [];
+  detail.replaceChildren();
+  const reference = document.createElement('section');
+  reference.append(element('p', descriptions[key]), element('h4', '语法与参数'));
+  const syntax = guide?.syntax ?? [key, ...fields.map(field => {
+    if (field.flag) return '[' + field.flag + ']';
+    if (field.prefix) return '[' + field.prefix + ' <' + field.label.replace('（可选）', '') + '>]';
+    const label = field.label.replace(/（.*）/, '');
+    const required = ['//set', '//walls', '//faces', '//overlay', '//center', '//replace',
+      '//sphere', '//hsphere', '//cyl', '//hcyl', '//line', '//fill', '//fillr',
+      '/brush sphere', '/brush cylinder'].includes(key) && label === '材料或方块模式'
+      || ['//count', '//schem save', '//schem load', '//drain', '/size', '/range'].includes(key)
+      || (key === '//rotate' && label.startsWith('Y'));
+    return required ? '<' + label + '>' : '[' + label + ']';
+  })].join(' ');
+  if (key === '//expand') {
+    reference.append(element('code', '//expand <格数> [反向格数] [方向]'), element('p', '或使用 //expand vert 扩展到世界全高。'));
+  } else {
+    reference.append(element('code', syntax));
+  }
+  if (fields.length) {
+    const parameters = document.createElement('dl');
+    const options = guide?.options ?? fields.filter(field => field.flag || field.prefix).map(field => {
+      if (field.flag) return [field.flag, field.label.split(' · ')[1]];
+      return [field.prefix, '按来源遮罩限制参与操作的方块。'];
+    });
+    for (const [name, meaning] of options) {
+      parameters.append(element('dt', name), element('dd', meaning));
+    }
+    reference.append(parameters);
+  }
+  reference.append(element('h4', '示例'));
+  for (const [command, meaning] of family.entries) {
+    const example = document.createElement('div');
+    example.className = 'example';
+    example.append(element('code', command), element('p', meaning));
+    reference.append(example);
+  }
+  const editor = document.createElement('section');
+  editor.className = 'editor';
+  editor.append(fields.length ? commandBuilder(key, fields) : commandBar(key));
+  const feedback = element('p', '');
+  feedback.id = 'feedback';
+  feedback.setAttribute('role', 'status');
+  editor.append(feedback);
+  detail.append(reference, editor);
+  activeCard = card;
+  dialog.showModal();
+  detail.scrollTop = 0;
+  playMorph(true);
+}
+
+let activeCard;
+let transition;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+function playMorph(opening) {
+  if (transition) {
+    if (!opening) {
+      for (const animation of transition.animations) {
+        if (animation.playbackRate > 0) animation.reverse();
+      }
+      transition.closing = true;
+    }
+    return;
+  }
+  if (reduceMotion.matches || !activeCard?.isConnected || !dialog.animate) {
+    if (!opening) dialog.close();
+    return;
+  }
+  const card = activeCard.getBoundingClientRect();
+  const panel = dialog.getBoundingClientRect();
+  if (!card.width || !panel.width || card.bottom < 0 || card.top > innerHeight) {
+    if (!opening) dialog.close();
+    return;
+  }
+
+  const surface = element('div', '');
+  const label = element('div', '');
+  label.append(activeCard.querySelector('code').cloneNode(true), activeCard.querySelector('span').cloneNode(true));
+  surface.className = 'morph-surface';
+  label.className = 'morph-label';
+  surface.setAttribute('aria-hidden', 'true');
+  surface.append(label);
+  // A manual popover puts the animation above the modal in the top layer.
+  const overlay = element('div', '');
+  overlay.setAttribute('popover', 'manual');
+  overlay.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;background:transparent;pointer-events:none;overflow:visible';
+  if (!overlay.showPopover) {
+    if (!opening) dialog.close();
+    return;
+  }
+  overlay.append(surface);
+  document.body.append(overlay);
+  overlay.showPopover();
+  dialog.classList.add('morphing');
+
+  const frame = (rect, radius) => ({
+    left: rect.left + 'px', top: rect.top + 'px',
+    width: rect.width + 'px', height: rect.height + 'px', borderRadius: radius + 'px'
+  });
+  const settings = { duration: 220, easing: 'cubic-bezier(.22,.7,.25,1)', fill: 'both',
+    direction: opening ? 'normal' : 'reverse' };
+  const animations = [
+    surface.animate([frame(card, 8), frame(panel, 14)], settings),
+    label.animate([{ opacity: 1 }, { opacity: 0, offset: .5 }, { opacity: 0 }], settings),
+    dialog.animate([{ opacity: 0 }, { opacity: 0, offset: .65 }, { opacity: 1 }], settings),
+    surface.animate([{ opacity: 1 }, { opacity: 1, offset: .65 }, { opacity: 0 }], settings)
+  ];
+  const current = { animations, closing: !opening };
+  transition = current;
+  animations[0].onfinish = () => {
+    if (current.closing) dialog.close();
+    overlay.remove();
+    dialog.classList.remove('morphing');
+    for (const animation of animations) animation.cancel();
+    transition = undefined;
+  };
+}
+
+dialog.querySelector('form').addEventListener('submit', event => {
+  event.preventDefault();
+  playMorph(false);
+});
+dialog.addEventListener('cancel', event => {
+  event.preventDefault();
+  playMorph(false);
+});
+
+function isBackdrop(event) {
+  if (event.target !== dialog) return false;
+  const bounds = dialog.getBoundingClientRect();
+  return event.clientX < bounds.left || event.clientX >= bounds.right ||
+    event.clientY < bounds.top || event.clientY >= bounds.bottom;
+}
+
+let startedOnBackdrop = false;
+dialog.addEventListener('pointerdown', event => {
+  startedOnBackdrop = isBackdrop(event);
+});
+dialog.addEventListener('click', event => {
+  if (startedOnBackdrop && isBackdrop(event)) playMorph(false);
+  startedOnBackdrop = false;
+});
+
+function render() {
+  list.replaceChildren();
+  const tokens = search.value.trim().toLowerCase().split(/\s+/);
+  let matches = 0;
+  for (const [name, keys] of Object.entries(catalog)) {
+    if (category !== '全部' && category !== name) continue;
+    const section = document.createElement('section');
+    section.className = 'category';
+    const cards = document.createElement('div');
+    cards.className = 'cards';
+    for (const key of keys.split(keys.includes('|') ? '|' : ' ')) {
+      const family = commandFamilies.get(key);
+      const text = [name, descriptions[key], ...family.entries.flat(),
+        ...(parameterGuides[key]?.options.flat() ?? []),
+        ...(builders[key] ?? []).map(field => field.label)].join(' ').toLowerCase();
+      if (!tokens.every(token => text.includes(token))) continue;
+      const card = document.createElement('button');
+      card.className = 'card';
+      card.setAttribute('aria-haspopup', 'dialog');
+      card.append(element('code', key), element('span', descriptions[key]));
+      card.onclick = () => openCommand(key, family, card);
+      cards.append(card);
+      matches++;
+    }
+    if (cards.children.length) {
+      section.append(element('h2', name), cards);
+      list.append(section);
+    }
+  }
+  count.textContent = matches ? matches + ' 个命令' : '没有找到匹配的命令。';
+}
+
+for (const name of categories) {
+  const button = element('button', name);
+  button.setAttribute('aria-pressed', String(name === category));
+  button.onclick = () => {
+    category = name;
+    for (const item of nav.children) item.setAttribute('aria-pressed', String(item === button));
+    render();
+  };
+  nav.append(button);
+}
+search.addEventListener('input', render);
+render();
+</script>
+</html>
