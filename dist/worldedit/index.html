@@ -328,7 +328,7 @@ const builders = {
   '//undo': [number('撤销次数', 1)], '//redo': [number('重做次数', 1)],
   '//help': [input('命令名', 'paste')],
   '//set': [materials('stone')],
-  '//replace': [blockField('来源遮罩（可选）'), materials('glass'), { label: '随机比例（%）', type: 'number', value: '', min: 1, max: 100, optional: true }],
+  '//replace': [blockField('来源遮罩（可选）'), materials('glass'), { label: '随机比例（%）', type: 'number', value: '', min: 1, max: 100, optional: true }, { label: '反选来源遮罩（!）', type: 'checkbox' }],
   '//walls': [materials('stone_bricks')], '//faces': [materials('glass')],
   '//overlay': [materials('grass_block')], '//center': [materials('glowstone')],
   '//stack': [air, flag('-s', '选中最后一份副本'), entities, biomes,
@@ -393,7 +393,7 @@ function commandBuilder(key, fields) {
     if (field.type === 'checkbox') control.checked = state.values[index] ?? false;
     else control.value = state.values[index] ?? field.value;
     const label = element('label', field.label + ' ');
-    if (field.flag) label.className = 'flag-option';
+    if (field.type === 'checkbox') label.className = 'flag-option';
     if (field.blockPicker) options.append(blockPicker(control, label, field.label));
     else {
       label.append(control);
@@ -420,7 +420,7 @@ function commandBuilder(key, fields) {
       const control = controls[index];
       if (field.type === 'checkbox') {
         state.values[index] = control.checked;
-        if (control.checked) parts.push(field.flag);
+        if (control.checked && field.flag) parts.push(field.flag);
         return;
       }
       const value = control.value.trim();
@@ -438,13 +438,19 @@ function commandBuilder(key, fields) {
         parts.push(field.type === 'number' ? String(control.valueAsNumber) : argument);
       }
     });
-    if (key === '//replace' && controls[2].value) {
-      const source = controls[0].value.trim().replace(/^"(.*)"$/, '$1') || '#existing';
-      const mask = '"' + source.replaceAll('"', '\\"') + ' %' + controls[2].valueAsNumber + '"';
-      parts.splice(1, controls[0].value.trim() ? 1 : 0, mask);
+    const invert = key === '//replace' && controls[3].checked;
+    const rawSource = key === '//replace' ? controls[0].value.trim() : '';
+    const missingSource = invert && !rawSource;
+    if (missingSource) valid = false;
+    if (key === '//replace' && (invert || controls[2].value)) {
+      let source = rawSource.replace(/^"(.*)"$/, '$1') || '#existing';
+      if (invert) source = source.startsWith('!') ? source.slice(1) : '!' + source;
+      const combined = controls[2].value ? source + ' %' + controls[2].valueAsNumber : source;
+      const mask = /\s/.test(combined) ? '"' + combined.replaceAll('"', '\\"') + '"' : combined;
+      parts.splice(1, rawSource ? 1 : 0, mask);
     }
     copy.disabled = !valid;
-    status.textContent = valid ? '' : '请检查必填项和数值范围。';
+    status.textContent = missingSource ? '反选时请填写来源遮罩。' : valid ? '' : '请检查必填项和数值范围。';
     preview.textContent = valid ? parts.join(' ') : key + ' …';
   }
 
@@ -503,7 +509,7 @@ function openCommand(key, family, card) {
   detail.replaceChildren();
   const reference = document.createElement('section');
   reference.append(element('p', descriptions[key]), element('h4', '语法与参数'));
-  const syntax = guide?.syntax ?? [key, ...fields.filter(field => !field.optional).map(field => {
+  const syntax = guide?.syntax ?? [key, ...fields.filter(field => !field.optional && (field.type !== 'checkbox' || field.flag)).map(field => {
     if (field.flag) return '[' + field.flag + ']';
     if (field.prefix) return '[' + field.prefix + ' <' + field.label.replace('（可选）', '') + '>]';
     const label = field.label.replace(/（.*）/, '');
@@ -540,6 +546,7 @@ function openCommand(key, family, card) {
       use.onclick = () => {
         const inputs = editor.querySelectorAll('.editor-options input');
         preset.forEach((value, index) => { inputs[index].value = value; });
+        for (const control of inputs) if (control.type === 'checkbox') control.checked = false;
         // Update the preview without opening the material suggestions.
         editor.querySelector('.builder').dispatchEvent(new Event('input'));
       };
