@@ -18,6 +18,7 @@ dialog.morphing::backdrop{background:#000a}
 .morph-surface{background:#19261d;border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .morph-label{position:absolute;inset:0;padding:16px;overflow:hidden}.morph-label span{display:block;margin-top:7px;color:var(--muted);line-height:1.45}.morph-surface{background:#1e2c22}
 .page-title{display:flex;align-items:center;gap:.22em}.page-title img{width:1.05em;height:1.05em;flex:none}
+.block-picker{padding:8px 10px;border:1px solid #344637;border-radius:8px;min-width:0}.builder .block-picker label{display:block;padding:0;border:0;margin-bottom:5px}.block-input-line{display:flex;gap:6px}.builder .block-input-line input{flex:1;min-width:0;margin:0}.block-picker ul{list-style:none;margin:8px 0 0;padding:0;max-height:225px;overflow:auto;overscroll-behavior:contain}.block-picker li>button{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px;text-align:left;padding:6px 8px;border-radius:4px;font-size:.82rem}.block-picker li>button:hover code{color:inherit}.block-picker li{font-size:.82rem}.block-picker li+li{margin-top:3px}
 </style>
 <main>
 <small>Minecraft Java 版 · WorldEdit 7.4</small>
@@ -200,13 +201,115 @@ const flag = (name, label) => ({ label: name + ' · ' + label, flag: name, type:
 const input = (label, value = '', prefix = '') => ({ label, value, prefix });
 const number = (label, value, min = 1) => ({ label, value, min, type: 'number' });
 const direction = (value = 'east') => ({ label: '方向', value, options: directions });
-const materials = value => input('材料或方块模式', value);
+
+const blockChoices = "air 空气\nstone 石头\nsmooth_stone 平滑石头\ncobblestone 圆石\nmossy_cobblestone 苔石\nstone_bricks 石砖\nmossy_stone_bricks 苔石砖\ncracked_stone_bricks 裂纹石砖\nbricks 红砖块\ndirt 泥土\ngrass_block 草方块\ncoarse_dirt 砂土\nrooted_dirt 缠根泥土\npodzol 灰化土\nmycelium 菌丝体\nmud 泥巴\nmud_bricks 泥砖\nsand 沙子\nred_sand 红沙\nsandstone 砂岩\nred_sandstone 红砂岩\ngravel 沙砾\nclay 黏土块\nandesite 安山岩\ndiorite 闪长岩\ngranite 花岗岩\npolished_andesite 磨制安山岩\npolished_diorite 磨制闪长岩\npolished_granite 磨制花岗岩\ndeepslate 深板岩\ncobbled_deepslate 深板岩圆石\ndeepslate_bricks 深板岩砖\ndeepslate_tiles 深板岩瓦\ntuff 凝灰岩\ncalcite 方解石\nbasalt 玄武岩\nblackstone 黑石\nobsidian 黑曜石\ncrying_obsidian 哭泣的黑曜石\nbedrock 基岩\nglass 玻璃\nglass_pane 玻璃板\ntinted_glass 遮光玻璃\nwater 水\nlava 岩浆\nice 冰\npacked_ice 浮冰\nblue_ice 蓝冰\nsnow_block 雪块\nsnow 雪\nmoss_block 苔藓块\nglowstone 荧石\nsea_lantern 海晶灯\nshroomlight 菌光体\ntorch 火把\nlantern 灯笼\nprismarine 海晶石\nprismarine_bricks 海晶石砖\ndark_prismarine 暗海晶石\nquartz_block 石英块\nsmooth_quartz 平滑石英块\nnetherrack 下界岩\nnether_bricks 下界砖块\nred_nether_bricks 红色下界砖块\nend_stone 末地石\nend_stone_bricks 末地石砖\npurpur_block 紫珀块\niron_block 铁块\ngold_block 金块\ndiamond_block 钻石块\nemerald_block 绿宝石块\ncoal_block 煤炭块\ncopper_block 铜块\ncut_copper 切制铜块\namethyst_block 紫水晶块\nterracotta 陶瓦\nbookshelf 书架\nsponge 海绵\nbarrier 屏障\nstructure_void 结构空位".split('\n').map(line => line.split(' '));
+const blockField = (label, value = '', prefix = '') => ({ ...input(label, value, prefix), blockPicker: true });
+
+for (const [wood, name] of Object.entries({
+  oak:'橡木', spruce:'云杉', birch:'白桦', jungle:'丛林', acacia:'金合欢',
+  dark_oak:'深色橡木', mangrove:'红树', cherry:'樱花', pale_oak:'苍白橡木'
+})) {
+  for (const [suffix, label] of Object.entries({planks:'木板', log:'原木', leaves:'树叶',
+    stairs:'楼梯', slab:'台阶', fence:'栅栏', door:'门', trapdoor:'活板门'})) {
+    blockChoices.push([wood + '_' + suffix, name + label]);
+  }
+}
+
+for (const [color, name] of Object.entries({
+  white:'白色', orange:'橙色', magenta:'品红色', light_blue:'淡蓝色',
+  yellow:'黄色', lime:'黄绿色', pink:'粉红色', gray:'灰色',
+  light_gray:'淡灰色', cyan:'青色', purple:'紫色', blue:'蓝色',
+  brown:'棕色', green:'绿色', red:'红色', black:'黑色'
+})) {
+  for (const [suffix, label] of Object.entries({wool:'羊毛', concrete:'混凝土',
+    terracotta:'陶瓦', stained_glass:'染色玻璃', stained_glass_pane:'染色玻璃板'})) {
+    blockChoices.push([color + '_' + suffix, name + label]);
+  }
+}
+
+let pickerCount = 0;
+function blockPicker(control, label, fieldName) {
+  const wrap = element('div', '');
+  wrap.className = 'block-picker';
+  control.id = 'block-input-' + ++pickerCount;
+  label.htmlFor = control.id;
+  control.autocomplete = 'off';
+  const toggle = element('button', '▾');
+  toggle.type = 'button';
+  toggle.setAttribute('aria-label', '显示' + fieldName + '的方块候选');
+  toggle.setAttribute('aria-expanded', 'false');
+  const list = element('ul', '');
+  list.hidden = true;
+  let buttons = [];
+
+  function refresh() {
+    const value = control.value;
+    const prefix = value.match(/^.*,(?=[^\\[\\]]*$)/)?.[0] ?? '';
+    const token = value.slice(prefix.length);
+    const modifier = token.match(/^\\s*(?:[!%]+|\\d+(?:\\.\\d+)?%)*/)?.[0] ?? '';
+    const term = token.slice(modifier.length).trim().toLowerCase();
+    const results = blockChoices.filter(([id, name]) =>
+      ('minecraft:' + id).includes(term) || name.includes(term)).slice(0, 12);
+    list.replaceChildren();
+    buttons = [];
+    for (const [id, name] of results) {
+      const row = element('li', '');
+      const option = element('button', '');
+      option.type = 'button';
+      option.append(element('span', name), element('code', 'minecraft:' + id));
+      option.onclick = () => {
+        control.value = prefix + modifier + 'minecraft:' + id;
+        control.dispatchEvent(new Event('input', { bubbles: true }));
+        control.focus();
+        close();
+      };
+      buttons.push(option);
+      row.append(option);
+      list.append(row);
+    }
+    if (!results.length) list.append(element('li', '无匹配方块，可保留手动输入。'));
+    list.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+  function close() {
+    list.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+  control.addEventListener('input', () => refresh());
+  toggle.onclick = () => list.hidden ? refresh() : close();
+  wrap.addEventListener('focusout', event => {
+    if (!wrap.contains(event.relatedTarget)) close();
+  });
+  wrap.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !list.hidden) {
+      event.preventDefault();
+      event.stopPropagation();
+      control.focus();
+      close();
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (list.hidden) refresh();
+      const index = buttons.indexOf(document.activeElement);
+      const next = event.key === 'ArrowDown' ? index + 1 : index < 0 ? buttons.length - 1 : index - 1;
+      if (buttons.length) {
+        event.preventDefault();
+        (buttons[next] ?? control).focus();
+      }
+    }
+  });
+  const line = element('div', '');
+  line.className = 'block-input-line';
+  line.append(control, toggle);
+  wrap.append(label, line, list);
+  return wrap;
+}
+
+const materials = value => blockField('材料或方块模式', value);
 const air = flag('-a', '跳过空气');
 const entities = flag('-e', '包含实体');
 const biomes = flag('-b', '包含生物群系');
-const source = input('来源遮罩（可选）', '', '-m');
+const source = blockField('来源遮罩（可选）', '', '-m');
 const coordinates = input('坐标 x,y,z（留空使用当前位置）');
-const heightMap = input('地表高度遮罩（可选）');
+const heightMap = blockField('地表高度遮罩（可选）');
 const builders = {
   '//pos1': [coordinates], '//pos2': [coordinates],
   '//sel': [{ label: '选区形状', value: '', options: {
@@ -217,18 +320,18 @@ const builders = {
   '//shift': [number('移动格数', 5), direction()],
   '//contract': [number('收缩格数', 3), direction('up')],
   '//inset': [number('缩小格数', 1)], '//outset': [number('扩大格数', 2)],
-  '//count': [input('方块遮罩', 'stone')],
+  '//count': [blockField('方块遮罩', 'stone')],
   '//undo': [number('撤销次数', 1)], '//redo': [number('重做次数', 1)],
   '//help': [input('命令名', 'paste')],
   '//set': [materials('stone')],
-  '//replace': [input('来源遮罩（可选）'), materials('glass')],
+  '//replace': [blockField('来源遮罩（可选）'), materials('glass')],
   '//walls': [materials('stone_bricks')], '//faces': [materials('glass')],
   '//overlay': [materials('grass_block')], '//center': [materials('glowstone')],
   '//stack': [air, flag('-s', '选中最后一份副本'), entities, biomes,
     number('复制份数', 4), direction(), source],
   '//move': [air, flag('-s', '选中移动后的范围'), entities, biomes,
-    number('移动格数', 5), direction('up'), input('原处填充材料（可选）'), source],
-  '//copy': [entities, biomes, source], '//cut': [entities, biomes, input('原处填充材料（可选）'), source],
+    number('移动格数', 5), direction('up'), blockField('原处填充材料（可选）'), source],
+  '//copy': [entities, biomes, source], '//cut': [entities, biomes, blockField('原处填充材料（可选）'), source],
   '//paste': [air, flag('-s', '选中粘贴范围'), flag('-n', '只预览选区'),
     flag('-o', '原地粘贴'), entities, biomes, source],
   '//rotate': [number('Y 轴角度', 90, -360), number('X 轴角度', 0, -360), number('Z 轴角度', 0, -360)],
@@ -244,12 +347,12 @@ const builders = {
   '//fillr': [materials('dirt'), number('半径', 8), number('深度', 3)],
   '//drain': [flag('-w', '移除含水状态'), number('半径', 15)],
   '//regen': [flag('-c', '生成到剪贴板'), biomes, input('种子（可选）')],
-  '//gmask': [input('全局遮罩（留空清除）', '#existing')],
+  '//gmask': [blockField('全局遮罩（留空清除）', '#existing')],
   '/brush sphere': [flag('-h', '空心'), materials('stone'), number('半径', 3)],
   '/brush cylinder': [flag('-h', '空心'), materials('stone'), number('半径', 5), number('高度', 8)],
   '/brush smooth': [number('半径', 4), number('平滑轮数', 2), heightMap],
   '/brush clipboard': [air, entities, biomes, source],
-  '/mask': [input('笔刷遮罩（留空清除）', 'stone,dirt')],
+  '/mask': [blockField('笔刷遮罩（留空清除）', 'stone,dirt')],
   '/range': [number('使用距离', 30)], '/size': [number('笔刷半径', 4)]
 };
 const builderStates = new Map();
@@ -285,9 +388,12 @@ function commandBuilder(key, fields) {
     if (field.type === 'checkbox') control.checked = state.values[index] ?? false;
     else control.value = state.values[index] ?? field.value;
     const label = element('label', field.label + ' ');
-    label.append(control);
     if (field.flag) label.className = 'flag-option';
-    options.append(label);
+    if (field.blockPicker) options.append(blockPicker(control, label, field.label));
+    else {
+      label.append(control);
+      options.append(label);
+    }
     return control;
   });
 
