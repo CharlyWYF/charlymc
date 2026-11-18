@@ -54,7 +54,7 @@ const groups = {
     ['//set air', '清空整个选区。'],
     ['//replace dirt grass_block', '把选区内的泥土替换成草方块。'],
     ['//replace air glass', '用玻璃填充选区内的空气。'],
-    ['//replace "##minecraft:leaves %25" air', '随机疏叶。树叶标签限定目标，%25 表示每块匹配的树叶有 25% 的概率被替换为空气。把 %25 改成 %10 可以少删一些。', ['##minecraft:leaves %25', 'air']],
+    ['//replace "##minecraft:leaves %25" air', '随机疏叶。树叶标签限定目标，%25 表示每块匹配的树叶有 25% 的概率被替换为空气。在随机比例框填 10 可以少删一些。', ['##minecraft:leaves', 'air', '25']],
     ['//set 70%stone,30%andesite', '按 70∶30 的权重随机混铺石头和安山岩。'],
     ['//walls stone_bricks', '沿选区的四个侧面建石砖墙。'],
     ['//faces glass', '将长方体选区的六个外表面设为玻璃。'],
@@ -328,7 +328,7 @@ const builders = {
   '//undo': [number('撤销次数', 1)], '//redo': [number('重做次数', 1)],
   '//help': [input('命令名', 'paste')],
   '//set': [materials('stone')],
-  '//replace': [blockField('来源遮罩（可选）'), materials('glass')],
+  '//replace': [blockField('来源遮罩（可选）'), materials('glass'), { label: '随机比例（%）', type: 'number', value: '', min: 1, max: 100, optional: true }],
   '//walls': [materials('stone_bricks')], '//faces': [materials('glass')],
   '//overlay': [materials('grass_block')], '//center': [materials('glowstone')],
   '//stack': [air, flag('-s', '选中最后一份副本'), entities, biomes,
@@ -383,8 +383,9 @@ function commandBuilder(key, fields) {
       if (field.type === 'number') {
         control.step = '1';
         control.min = field.min;
-        control.max = 2147483647;
-        control.required = true;
+        control.max = field.max ?? 2147483647;
+        control.required = !field.optional;
+        if (field.optional) control.placeholder = '可选';
       } else if (field.type !== 'checkbox') {
         control.required = Boolean(field.value) && !field.label.includes('留空');
       }
@@ -429,7 +430,7 @@ function commandBuilder(key, fields) {
         if (control.disabled || (index === 0 && !vertical) || (index === 2 && value === '0')) return;
       }
       if (!control.validity.valid || (control.required && !value)) valid = false;
-      if (value) {
+      if (value && !(key === '//replace' && index === 2)) {
         if (field.prefix) parts.push(field.prefix);
         const argument = field.blockPicker && /\s/.test(value) && !/^".*"$/.test(value)
           ? '"' + value.replaceAll('"', '\\"') + '"'
@@ -437,6 +438,11 @@ function commandBuilder(key, fields) {
         parts.push(field.type === 'number' ? String(control.valueAsNumber) : argument);
       }
     });
+    if (key === '//replace' && controls[2].value) {
+      const source = controls[0].value.trim().replace(/^"(.*)"$/, '$1') || '#existing';
+      const mask = '"' + source.replaceAll('"', '\\"') + ' %' + controls[2].valueAsNumber + '"';
+      parts.splice(1, controls[0].value.trim() ? 1 : 0, mask);
+    }
     copy.disabled = !valid;
     status.textContent = valid ? '' : '请检查必填项和数值范围。';
     preview.textContent = valid ? parts.join(' ') : key + ' …';
@@ -497,7 +503,7 @@ function openCommand(key, family, card) {
   detail.replaceChildren();
   const reference = document.createElement('section');
   reference.append(element('p', descriptions[key]), element('h4', '语法与参数'));
-  const syntax = guide?.syntax ?? [key, ...fields.map(field => {
+  const syntax = guide?.syntax ?? [key, ...fields.filter(field => !field.optional).map(field => {
     if (field.flag) return '[' + field.flag + ']';
     if (field.prefix) return '[' + field.prefix + ' <' + field.label.replace('（可选）', '') + '>]';
     const label = field.label.replace(/（.*）/, '');
@@ -532,7 +538,7 @@ function openCommand(key, family, card) {
     if (preset) {
       const use = element('button', '在编辑器中使用');
       use.onclick = () => {
-        const inputs = editor.querySelectorAll('input[type=text]');
+        const inputs = editor.querySelectorAll('.editor-options input');
         preset.forEach((value, index) => { inputs[index].value = value; });
         // Update the preview without opening the material suggestions.
         editor.querySelector('.builder').dispatchEvent(new Event('input'));
