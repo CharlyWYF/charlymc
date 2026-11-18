@@ -18,7 +18,7 @@ dialog.morphing::backdrop{background:#000a}
 .morph-surface{background:#19261d;border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .morph-label{position:absolute;inset:0;padding:16px;overflow:hidden}.morph-label span{display:block;margin-top:7px;color:var(--muted);line-height:1.45}.morph-surface{background:#1e2c22}
 .page-title{display:flex;align-items:center;gap:.22em}.page-title img{width:1.05em;height:1.05em;flex:none}
-.block-picker{padding:8px 10px;border:1px solid #344637;border-radius:8px;min-width:0}.builder .block-picker label{display:block;padding:0;border:0;margin-bottom:5px}.block-input-line{display:flex;gap:6px}.builder .block-input-line input{flex:1;min-width:0;margin:0}.block-picker ul{list-style:none;margin:8px 0 0;padding:0;max-height:225px;overflow:auto;overscroll-behavior:contain}.block-picker li>button{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px;text-align:left;padding:6px 8px;border-radius:4px;font-size:.82rem}.block-picker li>button:hover code{color:inherit}.block-picker li{font-size:.82rem}.block-picker li+li{margin-top:3px}
+.block-picker{padding:8px 10px;border:1px solid #344637;border-radius:8px;min-width:0}.builder .block-picker label{display:block;padding:0;border:0;margin-bottom:5px}.block-input-line{display:flex;gap:6px}.builder .block-input-line input{flex:1;min-width:0;margin:0}.block-picker ul{list-style:none;margin:8px 0 0;padding:0;max-height:min(360px, 42dvh);overflow:auto;overscroll-behavior:contain}.block-picker li>button{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px;text-align:left;padding:6px 8px;border-radius:4px;font-size:.82rem}.block-picker li>button:hover code{color:inherit}.block-picker li{font-size:.82rem}.block-picker li+li{margin-top:3px}
 </style>
 <main>
 <small>Minecraft Java 版 · WorldEdit 7.4</small>
@@ -234,31 +234,30 @@ function blockPicker(control, label, fieldName) {
   control.id = 'block-input-' + ++pickerCount;
   label.htmlFor = control.id;
   control.autocomplete = 'off';
-  const toggle = element('button', '▾');
-  toggle.type = 'button';
-  toggle.setAttribute('aria-label', '显示' + fieldName + '的方块候选');
-  toggle.setAttribute('aria-expanded', 'false');
   const list = element('ul', '');
+  list.id = control.id + '-choices';
+  control.setAttribute('aria-controls', list.id);
+  control.setAttribute('aria-expanded', 'false');
   list.hidden = true;
   let buttons = [];
 
-  function refresh() {
+  function refresh(showAll = false) {
     const value = control.value;
     const prefix = value.match(/^.*,(?=[^\\[\\]]*$)/)?.[0] ?? '';
     const token = value.slice(prefix.length);
     const modifier = token.match(/^\\s*(?:[!%]+|\\d+(?:\\.\\d+)?%)*/)?.[0] ?? '';
-    const term = token.slice(modifier.length).trim().toLowerCase();
+    const term = showAll ? '' : token.slice(modifier.length).trim().toLowerCase();
     const results = blockChoices.filter(([id, name]) =>
-      ('minecraft:' + id).includes(term) || name.includes(term)).slice(0, 12);
+      ('minecraft:' + id).includes(term) || name.includes(term));
     list.replaceChildren();
     buttons = [];
     for (const [id, name] of results) {
       const row = element('li', '');
       const option = element('button', '');
       option.type = 'button';
-      option.append(element('span', name), element('code', 'minecraft:' + id));
+      option.append(element('span', name), element('code', id));
       option.onclick = () => {
-        control.value = prefix + modifier + 'minecraft:' + id;
+        control.value = prefix + modifier + id;
         control.dispatchEvent(new Event('input', { bubbles: true }));
         control.focus();
         close();
@@ -269,14 +268,17 @@ function blockPicker(control, label, fieldName) {
     }
     if (!results.length) list.append(element('li', '无匹配方块，可保留手动输入。'));
     list.hidden = false;
-    toggle.setAttribute('aria-expanded', 'true');
+    control.setAttribute('aria-expanded', 'true');
   }
   function close() {
     list.hidden = true;
-    toggle.setAttribute('aria-expanded', 'false');
+    control.setAttribute('aria-expanded', 'false');
   }
   control.addEventListener('input', () => refresh());
-  toggle.onclick = () => list.hidden ? refresh() : close();
+  control.addEventListener('focus', () => refresh(true));
+  control.addEventListener('click', () => {
+    if (list.hidden) refresh(true);
+  });
   wrap.addEventListener('focusout', event => {
     if (!wrap.contains(event.relatedTarget)) close();
   });
@@ -298,7 +300,7 @@ function blockPicker(control, label, fieldName) {
   });
   const line = element('div', '');
   line.className = 'block-input-line';
-  line.append(control, toggle);
+  line.append(control);
   wrap.append(label, line, list);
   return wrap;
 }
