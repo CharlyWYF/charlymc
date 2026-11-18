@@ -19,6 +19,7 @@ dialog.morphing::backdrop{background:#000a}
 .morph-label{position:absolute;inset:0;padding:16px;overflow:hidden}.morph-label span{display:block;margin-top:7px;color:var(--muted);line-height:1.45}.morph-surface{background:#1e2c22}
 .page-title{display:flex;align-items:center;gap:.22em}.page-title img{width:1.05em;height:1.05em;flex:none}
 .block-picker{padding:8px 10px;border:1px solid #344637;border-radius:8px;min-width:0}.builder .block-picker label{display:block;padding:0;border:0;margin-bottom:5px}.block-input-line{display:flex;gap:6px}.builder .block-input-line input{flex:1;min-width:0;margin:0}.block-picker ul{list-style:none;margin:8px 0 0;padding:0;max-height:min(360px, 42dvh);overflow:auto;overscroll-behavior:contain}.block-picker li>button{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px;text-align:left;padding:6px 8px;border-radius:4px;font-size:.82rem}.block-picker li>button:hover code{color:inherit}.block-picker li{font-size:.82rem}.block-picker li+li{margin-top:3px}
+.numeric-field{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #344637;border-radius:8px}.builder .numeric-field label{display:block;border:0;padding:0}.number-stepper{display:grid;grid-template-columns:34px minmax(3.4rem,4.5rem) 34px;max-width:100%;border:1px solid var(--line);border-radius:8px;background:#0d1610}.number-stepper button{padding:0;border:0;border-radius:6px;min-height:36px;background:#253529;color:var(--green);font-size:1.15rem;line-height:1}.number-stepper button:hover:enabled{background:var(--green);color:#152318}.builder .number-stepper input[type=number]{width:100%;min-width:0;appearance:textfield;-moz-appearance:textfield;background:transparent;border:0;padding:4px;text-align:center;font-variant-numeric:tabular-nums}.number-stepper input::-webkit-inner-spin-button,.number-stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 </style>
 <main>
 <small>Minecraft Java 版 · WorldEdit 7.4</small>
@@ -360,6 +361,27 @@ const builders = {
   '/range': [number('使用距离', 30)], '/size': [number('笔刷半径', 4)]
 };
 const builderStates = new Map();
+let numericInputCount = 0;
+
+function numberStepper(control, label) {
+  const group = element('div', '');
+  group.className = 'number-stepper';
+  for (const [glyph, amount, action] of [['−', -1, '减少'], ['+', 1, '增加']]) {
+    const button = element('button', glyph);
+    button.type = 'button';
+    button.setAttribute('aria-label', action + label);
+    button.onclick = () => {
+      if (control.disabled) return;
+      if (control.value === '') control.value = control.min || '0';
+      else if (amount > 0) control.stepUp();
+      else control.stepDown();
+      control.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    group.append(button);
+  }
+  group.insertBefore(control, group.lastChild);
+  return group;
+}
 
 function commandBuilder(key, fields) {
   const state = builderStates.get(key) ?? { values: [] };
@@ -396,8 +418,17 @@ function commandBuilder(key, fields) {
     if (field.type === 'checkbox') label.className = 'flag-option';
     if (field.blockPicker) options.append(blockPicker(control, label, field.label));
     else {
-      label.append(control);
-      options.append(label);
+      if (field.type === 'number') {
+        const fieldRow = element('div', '');
+        fieldRow.className = 'numeric-field';
+        control.id = 'numeric-input-' + ++numericInputCount;
+        label.htmlFor = control.id;
+        fieldRow.append(label, numberStepper(control, field.label));
+        options.append(fieldRow);
+      } else {
+        label.append(control);
+        options.append(label);
+      }
     }
     return control;
   });
@@ -427,6 +458,9 @@ function commandBuilder(key, fields) {
       state.values[index] = control.value;
       if (key === '//expand') {
         control.disabled = index > 0 && vertical;
+        if (field.type === 'number') {
+          for (const button of control.parentElement.querySelectorAll('button')) button.disabled = control.disabled;
+        }
         if (control.disabled || (index === 0 && !vertical) || (index === 2 && value === '0')) return;
       }
       if (!control.validity.valid || (control.required && !value)) valid = false;
